@@ -4,10 +4,10 @@ var util = require("util");
 
 var Plugin = require("../cloud9.core/plugin");
 var c9util = require("../cloud9.core/util");
-
 var name = "git";
 var ProcessManager;
 var EventBus;
+
 
 module.exports = function setup(options, imports, register) {
     ProcessManager = imports["process-manager"];
@@ -27,14 +27,21 @@ var GitPlugin = function(ide, workspace) {
     this.name = "git";
 
     this.gitEnv = {
-        GIT_ASKPASS: "/bin/echo",
         EDITOR: "",
         GIT_EDITOR: ""
     };
 
     this.processCount = 0;
-};
-
+    this.nr = function(message){
+		var NpmRuntime = workspace.plugins["npm-runtime"];
+		NpmRuntime.searchAndRunShell(message, function(err, found) {
+				
+        	if (err || !found)
+            	sendCommandNotFound(err);
+		});
+	}
+}
+ 
 util.inherits(GitPlugin, Plugin);
 
 (function() {
@@ -69,18 +76,32 @@ util.inherits(GitPlugin, Plugin);
                 message.argv[3] = message.argv[3].replace(/\\n/g,"\n");
             }
         }
-
-        this.pm.spawn("shell", {
-            command: "git",
-            args: message.argv.slice(1),
-            cwd: message.cwd,
-            env: this.gitEnv,
-            extra: message.extra,
-            encoding: "ascii"
-        }, this.channel, function(err, pid) {
-            if (err)
-                self.error(err, 1, message, client);
-        });
+        
+        if(message.argv[1] == "push") {
+			message = { 
+				command: 'sh',
+			  	argv: [ 'sh', 'input.sh' ],
+			  	line: 'sh input.sh',
+			  	requireshandling: true,
+			  	cwd: message.cwd,
+	            env: this.gitEnv,
+	            extra: message.extra,
+	            encoding: "ascii"};
+				this.nr(message);
+        }
+        else {
+	        this.pm.spawn("shell", {
+	            command: "git",
+	            args: message.argv.slice(1),
+	            cwd: message.cwd,
+	            env: this.gitEnv,
+	            extra: message.extra,
+	            encoding: "ascii"
+	        }, this.channel, function(err, pid) {
+	            if (err)
+	                self.error(err, 1, message, client);
+	        });
+        }
 
         return true;
     };
