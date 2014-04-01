@@ -8,7 +8,6 @@ var name = "git";
 var ProcessManager;
 var EventBus;
 
-
 module.exports = function setup(options, imports, register) {
     ProcessManager = imports["process-manager"];
     EventBus = imports.eventbus;
@@ -78,10 +77,11 @@ util.inherits(GitPlugin, Plugin);
         }
         
         if(message.argv[1] == "push") {
+        	cmd = 'sh ~/cloud9/git_push.sh'
 			message = { 
 				command: 'sh',
-			  	argv: [ 'sh', 'input.sh' ],
-			  	line: 'sh input.sh',
+			  	argv: [ cmd.split[0], cmd.split[1] ],
+			  	line: cmd,
 			  	requireshandling: true,
 			  	cwd: message.cwd,
 	            env: this.gitEnv,
